@@ -1,32 +1,12 @@
-
 pipeline {
     agent any
 
     environment {
-         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     stages {
-        stage('Print Git Commit') {
-            steps {
-                sh 'git rev-parse HEAD'
-            }
-        }
-
-        stage('Check Node, NPM & Maven') {
-            steps {
-                sh '''
-                which node || echo "node not found"
-                which npm || echo "npm not found"
-                node -v || echo "node version unknown"
-                npm -v || echo "npm version unknown"
-
-                which mvn || echo "mvn not found"
-                mvn -v || echo "mvn version unknown"
-                '''
-            }
-        }
-
+        // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
                 dir('reactfrontend') {
@@ -38,6 +18,7 @@ pipeline {
             }
         }
 
+        // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
             steps {
                 sh '''
@@ -53,6 +34,7 @@ pipeline {
             }
         }
 
+        // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
                 dir('springbootbackend') {
@@ -61,21 +43,25 @@ pipeline {
             }
         }
 
+        // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
                 sh '''
                 WAR_PATH="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/task.war"
                 WAR_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/task"
 
-                rm -f "$WAR_PATH"
-                rm -rf "$WAR_DIR"
+                if [ -f "$WAR_PATH" ]; then
+                    rm -f "$WAR_PATH"
+                fi
 
-                cd springbootbackend/target
-                cp *.war "/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/"
+                if [ -d "$WAR_DIR" ]; then
+                    rm -rf "$WAR_DIR"
+                fi
+
+                cp springbootbackend/target/*.war "/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/"
                 '''
             }
         }
-
     }
 
     post {
