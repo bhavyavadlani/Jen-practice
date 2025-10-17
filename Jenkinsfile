@@ -40,14 +40,15 @@ pipeline {
         stage('Deploy Frontend to Tomcat') {
             steps {
                 sh '''
-                REACT_DEPLOY_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/task-manage"
+                # Deploy frontend to a separate folder (NOT 'manager')
+                FRONTEND_DEPLOY_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/task-manage"
 
-                if [ -d "$REACT_DEPLOY_DIR" ]; then
-                    rm -rf "$REACT_DEPLOY_DIR"
+                if [ -d "$FRONTEND_DEPLOY_DIR" ]; then
+                    rm -rf "$FRONTEND_DEPLOY_DIR"
                 fi
 
-                mkdir -p "$REACT_DEPLOY_DIR"
-                cp -R reactfrontend/dist/* "$REACT_DEPLOY_DIR"
+                mkdir -p "$FRONTEND_DEPLOY_DIR"
+                cp -R reactfrontend/dist/* "$FRONTEND_DEPLOY_DIR"
                 '''
             }
         }
