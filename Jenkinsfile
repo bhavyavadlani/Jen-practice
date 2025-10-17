@@ -1,8 +1,9 @@
+
 pipeline {
     agent any
 
     environment {
-        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     stages {
@@ -69,35 +70,20 @@ pipeline {
                 rm -f "$WAR_PATH"
                 rm -rf "$WAR_DIR"
 
-                cp springbootbackend/target/*.war "$WAR_PATH"
+                cd springbootbackend/target
+                cp *.war "/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/"
                 '''
             }
         }
 
-        stage('Restart Tomcat') {
-            steps {
-                sh '''
-                TOMCAT_BIN="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/bin"
-
-                # Stop Tomcat (ignore error if already stopped)
-                "$TOMCAT_BIN/shutdown.sh" || true
-
-                # Wait a bit for shutdown to complete
-                sleep 5
-
-                # Start Tomcat
-                "$TOMCAT_BIN/startup.sh"
-                '''
-            }
-        }
     }
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo ' Pipeline Failed.'
+            echo 'Pipeline Failed.'
         }
     }
 }
