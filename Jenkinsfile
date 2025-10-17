@@ -1,17 +1,29 @@
-jenkinsfile
 
 pipeline {
     agent any
 
     environment {
-        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        TOMCAT_HOME = "/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43"
+         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Print Git Commit') {
             steps {
-                checkout scm
+                sh 'git rev-parse HEAD'
+            }
+        }
+
+        stage('Check Node, NPM & Maven') {
+            steps {
+                sh '''
+                which node || echo "node not found"
+                which npm || echo "npm not found"
+                node -v || echo "node version unknown"
+                npm -v || echo "npm version unknown"
+
+                which mvn || echo "mvn not found"
+                mvn -v || echo "mvn version unknown"
+                '''
             }
         }
 
@@ -19,12 +31,6 @@ pipeline {
             steps {
                 dir('reactfrontend') {
                     sh '''
-                    echo "PATH=$PATH"
-                    which node || echo "node not found"
-                    node -v || echo "node version unknown"
-                    which npm || echo "npm not found"
-                    npm -v || echo "npm version unknown"
-
                     npm install
                     npm run build
                     '''
@@ -32,52 +38,53 @@ pipeline {
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Deploy Frontend to Tomcat') {
             steps {
                 sh '''
-                FRONTEND_DIR="$TOMCAT_HOME/webapps/manager"
-                rm -rf "$FRONTEND_DIR"
-                mkdir -p "$FRONTEND_DIR"
-                cp -R reactfrontend/dist/* "$FRONTEND_DIR"
+                REACT_DEPLOY_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/manager"
+
+                if [ -d "$REACT_DEPLOY_DIR" ]; then
+                    rm -rf "$REACT_DEPLOY_DIR"
+                fi
+
+                mkdir -p "$REACT_DEPLOY_DIR"
+                cp -R reactfrontend/dist/* "$REACT_DEPLOY_DIR"
                 '''
             }
         }
 
-        stage('Build Backend WAR') {
+        stage('Build Backend') {
             steps {
                 dir('springbootbackend') {
-                    sh 'mvn clean package -DskipTests'
+                    sh 'mvn clean package'
                 }
             }
         }
 
-        stage('Deploy Backend WAR to Tomcat') {
+        stage('Deploy Backend to Tomcat') {
             steps {
                 sh '''
-                # Automatically get the built WAR file
-                WAR_FILE=$(ls springbootbackend/target/*.war | head -n 1)
-                cp "$WAR_FILE" "$TOMCAT_HOME/webapps/springbootbackend.war"
+                WAR_PATH="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/springbootbackend.war"
+                WAR_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/springbootbackend"
+
+                rm -f "$WAR_PATH"
+                rm -rf "$WAR_DIR"
+
+                cd springbootbackend/target
+                cp *.war "/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/"
                 '''
             }
         }
 
-        stage('Restart Tomcat') {
-            steps {
-                sh '''
-                $TOMCAT_HOME/bin/shutdown.sh || true
-                sleep 3
-                $TOMCAT_HOME/bin/startup.sh
-                '''
-            }
-        }
     }
 
     post {
         success {
-            echo ' Deployment Successful!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo ' Pipeline Failed.'
+            echo 'Pipeline Failed.'
         }
     }
 }
+
