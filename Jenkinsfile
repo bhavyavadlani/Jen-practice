@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -41,7 +40,7 @@ pipeline {
         stage('Deploy Frontend to Tomcat') {
             steps {
                 sh '''
-                REACT_DEPLOY_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/manager-task"
+                REACT_DEPLOY_DIR="/Users/vadlanibhavya/Downloads/apache-tomcat-10.1.43/webapps/task-manage"
 
                 if [ -d "$REACT_DEPLOY_DIR" ]; then
                     rm -rf "$REACT_DEPLOY_DIR"
@@ -87,4 +86,3 @@ pipeline {
         }
     }
 }
-
